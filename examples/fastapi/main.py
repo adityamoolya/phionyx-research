@@ -14,14 +14,12 @@ Endpoint:
 Payload Example:
     {"text": "User input text", "profile": "edu"}
 """
-import os
-import sys
 import time
 import hashlib
 from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-sys.path.append(os.path.abspath("../../"))
+
 from phionyx_core import EchoOrchestrator, OrchestratorServices
 
 app = FastAPI(
@@ -69,10 +67,11 @@ async def govern_endpoint(request: GovernRequest):
                 "entropy": meta.get("current_entropy", 0.31)
             },
             "safety": {
-                "kill_switch": "inactive",
-                "ethics_gate": "pass",
-                "input_safety": "pass",
-                "revision_directive": "pass"
+                "_note": "Placeholder values. Wire to pipeline gate results for production use.",
+                "kill_switch": "not_wired",
+                "ethics_gate": "not_wired",
+                "input_safety": "not_wired",
+                "revision_directive": "not_wired"
             },
             "telemetry": {
                 "pipeline_blocks_executed": len(result.get("results", {})),
@@ -91,3 +90,4 @@ async def govern_endpoint(request: GovernRequest):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    
