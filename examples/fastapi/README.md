@@ -53,8 +53,9 @@ curl -X POST http://127.0.0.1:8000/govern \
   -H "Content-Type: application/json" \
   -d '{"text": "How can I improve my study habits?", "profile": "edu"}'
 ```
-### Test with swaggerUi at 
-```http://localhost:8000```
+### Swagger UI
+
+Open `http://localhost:8000/docs` for interactive API documentation.
 
 ## Expected Response
 
