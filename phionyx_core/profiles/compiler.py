@@ -8,8 +8,9 @@ Reduces runtime latency by pre-calculating parameter mappings.
 
 import json
 import logging
-from typing import Dict, Any, Optional, List
 from pathlib import Path
+from typing import Any, cast
+
 from .schema import Profile
 from .tuner import ProfileTuner
 
@@ -26,7 +27,7 @@ class ProfileCompiler:
     - Caches results for fast runtime lookup
     """
 
-    def __init__(self, cache_dir: Optional[Path] = None):
+    def __init__(self, cache_dir: Path | None = None):
         """
         Initialize profile compiler.
 
@@ -37,7 +38,7 @@ class ProfileCompiler:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.tuner = ProfileTuner()
 
-    def compile_profile(self, profile: Profile) -> Dict[str, Any]:
+    def compile_profile(self, profile: Profile) -> dict[str, Any]:
         """
         Compile a profile to cached parameters.
 
@@ -47,7 +48,7 @@ class ProfileCompiler:
         Returns:
             Compiled profile dictionary with pre-calculated parameters
         """
-        compiled = {
+        compiled: dict[str, Any] = {
             "name": profile.name,
             "version": profile.version or "1.0.0",
             "compiled_at": None,  # Will be set by caller
@@ -106,7 +107,7 @@ class ProfileCompiler:
 
         return compiled
 
-    def save_compiled_profile(self, compiled: Dict[str, Any], profile_name: str):
+    def save_compiled_profile(self, compiled: dict[str, Any], profile_name: str):
         """
         Save compiled profile to cache.
 
@@ -128,7 +129,7 @@ class ProfileCompiler:
         except Exception as e:
             logger.error(f"Failed to save compiled profile: {e}")
 
-    def load_compiled_profile(self, profile_name: str) -> Optional[Dict[str, Any]]:
+    def load_compiled_profile(self, profile_name: str) -> dict[str, Any] | None:
         """
         Load compiled profile from cache.
 
@@ -144,8 +145,8 @@ class ProfileCompiler:
             return None
 
         try:
-            with open(cache_file, "r", encoding="utf-8") as f:
-                compiled = json.load(f)
+            with open(cache_file, encoding="utf-8") as f:
+                compiled = cast(dict[str, Any], json.load(f))
 
             logger.debug(f"Loaded compiled profile: {cache_file}")
             return compiled
@@ -154,7 +155,7 @@ class ProfileCompiler:
             logger.error(f"Failed to load compiled profile: {e}")
             return None
 
-    def compile_all_profiles(self, profiles: List[Profile]):
+    def compile_all_profiles(self, profiles: list[Profile]):
         """
         Compile all profiles and save to cache.
 
@@ -171,7 +172,7 @@ class ProfileCompiler:
                 logger.error(f"Failed to compile profile {profile.name}: {e}")
 
 
-def compile_profiles(profile_dir: Optional[Path] = None):
+def compile_profiles(profile_dir: Path | None = None):
     """
     Convenience function to compile all profiles from YAML.
 
@@ -181,7 +182,8 @@ def compile_profiles(profile_dir: Optional[Path] = None):
     from .loader import ProfileLoader
 
     loader = ProfileLoader(profile_dir)
-    profiles = loader.load_all_profiles()
+    raw_profiles = loader._load_profiles()
+    profiles = [loader.load_profile(name) for name in raw_profiles]
 
     compiler = ProfileCompiler()
     compiler.compile_all_profiles(profiles)
@@ -193,10 +195,6 @@ if __name__ == "__main__":
     # CLI entry point
     import sys
 
-    if len(sys.argv) > 1:
-        profile_dir = Path(sys.argv[1])
-    else:
-        profile_dir = None
-
-    compile_profiles(profile_dir)
+    cli_profile_dir: Path | None = Path(sys.argv[1]) if len(sys.argv) > 1 else None
+    compile_profiles(cli_profile_dir)
 

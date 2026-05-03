@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "phionyx-core"
-version = "0.2.0"
+version = "0.2.1"
 description = "Deterministic, auditable AI cognition runtime — not an LLM wrapper"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -42,20 +42,14 @@ classifiers = [
 dependencies = [
     "pydantic>=2.0.0,<3.0.0",
     "typing-extensions>=4.0.0",
+    "PyYAML>=6.0",
+    "numpy>=1.24.0",
 ]
 
 [project.optional-dependencies]
 # Graph / intuition layer (networkx for CausalGraph, graph_engine)
 graph = [
     "networkx>=3.0",
-]
-# Numeric extensions (UKF, CEP, metrics)
-numeric = [
-    "numpy>=1.24.0",
-]
-# Profile loader reads YAML configs
-yaml = [
-    "PyYAML>=6.0",
 ]
 # OpenTelemetry instrumentation
 telemetry = [
@@ -77,18 +71,21 @@ dev = [
     "pytest-cov>=4.0.0",
     "ruff>=0.4.0",
     "mypy>=1.0.0",
+    "types-PyYAML>=6.0",
 ]
-# All optional runtime dependencies
+# All optional runtime adapters
 all = [
-    "phionyx-core[graph,numeric,yaml,telemetry]",
+    "phionyx-core[graph,telemetry]",
 ]
 
 [project.urls]
 Homepage = "https://phionyx.ai"
-Documentation = "https://phionyx.ai/docs"
+Documentation = "https://github.com/halvrenofviryel/phionyx-research#readme"
+Installation = "https://github.com/halvrenofviryel/phionyx-research/blob/main/INSTALLATION.md"
 Repository = "https://github.com/halvrenofviryel/phionyx-research"
 Issues = "https://github.com/halvrenofviryel/phionyx-research/issues"
 Changelog = "https://github.com/halvrenofviryel/phionyx-research/blob/main/CHANGELOG.md"
+Discussions = "https://github.com/halvrenofviryel/phionyx-research/discussions"
 
 [tool.setuptools]
 packages = {find = {where = ["."], include = ["phionyx_core*"]}}
@@ -128,6 +125,12 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
 ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -139,6 +142,9 @@ addopts = [
     "-v",
     "--strict-markers",
     "--tb=short",
+]
+markers = [
+    "integration: opt-in tests that hit the network / PyPI / external services. Run with `-m integration`. Excluded from the default CI matrix.",
 ]
 
 [tool.coverage.run]

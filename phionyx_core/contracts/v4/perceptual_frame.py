@@ -6,10 +6,11 @@ Composes BlockContext + MeasurementVector with v4 perceptual fields.
 AD-1: Composition — existing models are referenced, not replaced.
 """
 
-from typing import Optional, Dict, Any, List
-from enum import Enum
-from pydantic import BaseModel, Field
 from datetime import datetime, timezone
+from enum import Enum
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Modality(str, Enum):
@@ -45,19 +46,19 @@ class PerceptualFrame(BaseModel):
         ge=0.0, le=1.0,
         description="Salience score — how attention-worthy this frame is"
     )
-    semantic_tags: List[str] = Field(
+    semantic_tags: list[str] = Field(
         default_factory=list,
         description="Semantic tags extracted from input"
     )
-    intent_vector: Optional[Dict[str, float]] = Field(
+    intent_vector: dict[str, float] | None = Field(
         None,
         description="Intent classification distribution"
     )
-    entity_mentions: List[Dict[str, Any]] = Field(
+    entity_mentions: list[dict[str, Any]] = Field(
         default_factory=list,
         description="Named entities detected in input"
     )
-    source_signal_id: Optional[str] = Field(
+    source_signal_id: str | None = Field(
         None,
         description="Reference to originating InputSignal"
     )
@@ -65,19 +66,9 @@ class PerceptualFrame(BaseModel):
         default_factory=lambda: datetime.now(timezone.utc),
         description="Frame creation timestamp"
     )
-    raw_features: Dict[str, Any] = Field(
+    raw_features: dict[str, Any] = Field(
         default_factory=dict,
         description="Raw feature vector for downstream processing"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "A_meas": 0.6,
-                "V_meas": 0.3,
-                "H_meas": 0.4,
-                "confidence": 0.85,
-                "modality": "text",
-                "salience": 0.7,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={'example': {'A_meas': 0.6, 'V_meas': 0.3, 'H_meas': 0.4, 'confidence': 0.85, 'modality': 'text', 'salience': 0.7}})
