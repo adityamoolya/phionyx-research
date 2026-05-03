@@ -32,9 +32,10 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
-import yaml
+from typing import Any, cast
+
 import numpy as np
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +50,11 @@ class EmotionalTelemetryInput:
     npc_id: str
     session_id: str
 
-    physics: Dict[str, float]
-    memory: Dict[str, Any]
-    narrative: Dict[str, float]
-    policy: Dict[str, Any]
-    persona_baseline: Dict[str, List[float]]
+    physics: dict[str, float]
+    memory: dict[str, Any]
+    narrative: dict[str, float]
+    policy: dict[str, Any]
+    persona_baseline: dict[str, list[float]]
 
     timestamp: datetime
 
@@ -79,7 +80,7 @@ class EmotionalKPIOutput:
 # THRESHOLD LOADING
 # ============================================================================
 
-def load_thresholds() -> Dict[str, Dict[str, float]]:
+def load_thresholds() -> dict[str, dict[str, float]]:
     """Sağlık eşiklerini YAML dosyasından yükle."""
     threshold_file = Path(__file__).parent / "emotional_kpi_thresholds.yaml"
 
@@ -88,15 +89,15 @@ def load_thresholds() -> Dict[str, Dict[str, float]]:
         return _get_default_thresholds()
 
     try:
-        with open(threshold_file, "r", encoding="utf-8") as f:
-            thresholds = yaml.safe_load(f)
+        with open(threshold_file, encoding="utf-8") as f:
+            thresholds = cast(dict[str, dict[str, float]], yaml.safe_load(f))
         return thresholds
     except Exception as e:
         logger.error(f"Failed to load thresholds: {e}, using defaults")
         return _get_default_thresholds()
 
 
-def _get_default_thresholds() -> Dict[str, Dict[str, float]]:
+def _get_default_thresholds() -> dict[str, dict[str, float]]:
     """Varsayılan eşik değerleri."""
     return {
         "profile_separation_index": {"min": 0.40},
@@ -114,8 +115,8 @@ def _get_default_thresholds() -> Dict[str, Dict[str, float]]:
 # ============================================================================
 
 def calculate_profile_separation(
-    reference_outputs: List[Dict[str, Any]],
-    current_output: Dict[str, Any]
+    reference_outputs: list[dict[str, Any]],
+    current_output: dict[str, Any]
 ) -> float:
     """
     Profile Separation Index (PSI) hesapla.
@@ -156,7 +157,7 @@ def calculate_profile_separation(
             return 0.5
 
         # Ortalama benzerlik ne kadar düşükse, ayrım o kadar yüksek
-        avg_similarity = np.mean(similarities)
+        avg_similarity = float(np.mean(similarities))
         psi = 1.0 - avg_similarity  # Mesafe = 1 - Benzerlik
 
         return max(0.0, min(1.0, psi))
@@ -166,7 +167,7 @@ def calculate_profile_separation(
         return 0.5
 
 
-def _extract_feature_vector(output: Dict[str, Any]) -> List[float]:
+def _extract_feature_vector(output: dict[str, Any]) -> list[float]:
     """Çıktıdan özellik vektörü çıkar (physics + narrative metrikleri)."""
     features = []
 
@@ -185,7 +186,7 @@ def _extract_feature_vector(output: Dict[str, Any]) -> List[float]:
     return features
 
 
-def _cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
+def _cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
     """Cosine similarity hesapla."""
     try:
         a = np.array(vec_a)
@@ -198,12 +199,12 @@ def _cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
         if norm_a == 0 or norm_b == 0:
             return 0.0
 
-        return dot_product / (norm_a * norm_b)
+        return float(dot_product / (norm_a * norm_b))
     except Exception:
         return 0.0
 
 
-def calculate_long_term_recall(memory: Dict[str, Any]) -> Tuple[float, float]:
+def calculate_long_term_recall(memory: dict[str, Any]) -> tuple[float, float]:
     """
     Long-Term Recall Accuracy (LTRA) ve False Memory Rate (FMR) hesapla.
 
@@ -235,8 +236,8 @@ def calculate_long_term_recall(memory: Dict[str, Any]) -> Tuple[float, float]:
 
 
 def calculate_personality_drift(
-    baseline: List[float],
-    current: List[float]
+    baseline: list[float],
+    current: list[float]
 ) -> float:
     """
     Personality Drift Index (PDI) hesapla.
@@ -278,7 +279,7 @@ def calculate_personality_drift(
         return 0.0
 
 
-def calculate_echo_reactivity(physics: Dict[str, float]) -> float:
+def calculate_echo_reactivity(physics: dict[str, float]) -> float:
     """
     Echo Reactivity Ratio (ERR) hesapla.
 
@@ -309,7 +310,7 @@ def calculate_echo_reactivity(physics: Dict[str, float]) -> float:
         return 0.5
 
 
-def calculate_empathy_safety(narrative: Dict[str, float]) -> float:
+def calculate_empathy_safety(narrative: dict[str, float]) -> float:
     """
     Empathy Safety Score (ESS) hesapla.
 
@@ -340,7 +341,7 @@ def calculate_empathy_safety(narrative: Dict[str, float]) -> float:
         return 0.5
 
 
-def calculate_ethical_violation(policy: Dict[str, Any]) -> float:
+def calculate_ethical_violation(policy: dict[str, Any]) -> float:
     """
     Ethical Violation Rate (EVR) hesapla.
 
@@ -373,7 +374,7 @@ def calculate_ethical_violation(policy: Dict[str, Any]) -> float:
 
 def compute_all_kpis(
     input_data: EmotionalTelemetryInput,
-    reference_outputs: Optional[List[Dict[str, Any]]] = None
+    reference_outputs: list[dict[str, Any]] | None = None
 ) -> EmotionalKPIOutput:
     """
     Tüm KPI'ları hesapla ve döndür.
@@ -439,7 +440,7 @@ def compute_all_kpis(
         )
 
 
-def validate_kpi_thresholds(kpi_output: EmotionalKPIOutput) -> Dict[str, bool]:
+def validate_kpi_thresholds(kpi_output: EmotionalKPIOutput) -> dict[str, bool]:
     """
     KPI'ların sağlık eşiklerini kontrol et.
 

@@ -3,16 +3,15 @@ Behavioral Drift Detection Block
 Pipeline-integrated drift detection for Silent Failure Firewall.
 """
 
-from typing import Optional
 import logging
 
-from ..base import PipelineBlock, BlockContext, BlockResult
 from ...monitoring.behavioral_drift import (
     BehavioralDriftDetector,
 )
 from ...monitoring.circuit_breaker import (
     CircuitBreaker,
 )
+from ..base import BlockContext, BlockResult, PipelineBlock
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +35,8 @@ class BehavioralDriftDetectionBlock(PipelineBlock):
 
     def __init__(
         self,
-        drift_detector: Optional[BehavioralDriftDetector] = None,
-        circuit_breaker: Optional[CircuitBreaker] = None,
+        drift_detector: BehavioralDriftDetector | None = None,
+        circuit_breaker: CircuitBreaker | None = None,
         enabled: bool = True
     ):
         """
@@ -100,11 +99,11 @@ class BehavioralDriftDetectionBlock(PipelineBlock):
                 )
 
             # Extract physics metrics from metadata or context
-            current_metrics = {
-                "phi": metadata.get("phi") or getattr(context, 'previous_phi', 0.0),
-                "entropy": context.current_entropy or 0.0,
-                "valence": metadata.get("valence") or 0.0,
-                "arousal": metadata.get("arousal") or 0.5,
+            current_metrics: dict[str, float] = {
+                "phi": float(metadata.get("phi") or getattr(context, 'previous_phi', 0.0) or 0.0),
+                "entropy": float(context.current_entropy or 0.0),
+                "valence": float(metadata.get("valence") or 0.0),
+                "arousal": float(metadata.get("arousal") or 0.5),
             }
 
             # Extract ethics vector from metadata

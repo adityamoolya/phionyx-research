@@ -12,10 +12,9 @@ Per Echoism Core v1.0:
 
 from __future__ import annotations
 
-from typing import Dict, Optional, Tuple
+import math
 from dataclasses import dataclass
 from datetime import datetime, timezone
-import math
 
 # Import EchoEvent and EchoState2 if available
 try:
@@ -24,17 +23,17 @@ try:
     ECHO_STATE_AVAILABLE = True
 except ImportError:
     ECHO_STATE_AVAILABLE = False
-    EchoEvent = None
-    EchoState2 = None
+    EchoEvent = None  # type: ignore[assignment,misc]
+    EchoState2 = None  # type: ignore[assignment,misc]
 
 
 def trace_weight(
     event: EchoEvent,
-    state: Optional[EchoState2] = None,
-    dt: Optional[float] = None,
-    confidence: Optional[float] = None,
+    state: EchoState2 | None = None,
+    dt: float | None = None,
+    confidence: float | None = None,
     half_life_seconds: float = 300.0,
-    base_decay_rate: Optional[float] = None
+    base_decay_rate: float | None = None
 ) -> float:
     """
     Standard trace weight calculation API.
@@ -63,7 +62,7 @@ def trace_weight(
     Returns:
         Trace weight (0.0-1.0)
     """
-    if not ECHO_STATE_AVAILABLE or not EchoEvent:
+    if not ECHO_STATE_AVAILABLE:
         raise ImportError("EchoEvent and EchoState2 required for trace_weight")
 
     # Get current time from state or use event timestamp
@@ -122,9 +121,9 @@ def trace_weight(
 
 def calculate_trace_strength_from_tags(
     state: EchoState2,
-    tags: Optional[list[str]] = None,
+    tags: list[str] | None = None,
     half_life_seconds: float = 300.0,
-    confidence: Optional[float] = None
+    confidence: float | None = None
 ) -> float:
     """
     Calculate trace strength from E_tags in state.
@@ -143,7 +142,7 @@ def calculate_trace_strength_from_tags(
     Returns:
         Trace strength (0.0-1.0)
     """
-    if not ECHO_STATE_AVAILABLE or not EchoState2:
+    if not ECHO_STATE_AVAILABLE:
         raise ImportError("EchoState2 required for calculate_trace_strength_from_tags")
 
     if not state or not hasattr(state, 'E_tags') or not state.E_tags:
@@ -214,7 +213,7 @@ def get_trace_tags_for_retrieval(
     Returns:
         List of active tag strings
     """
-    if not ECHO_STATE_AVAILABLE or not EchoState2:
+    if not ECHO_STATE_AVAILABLE:
         raise ImportError("EchoState2 required for get_trace_tags_for_retrieval")
 
     if not state or not hasattr(state, 'E_tags') or not state.E_tags:
@@ -224,7 +223,7 @@ def get_trace_tags_for_retrieval(
     now = state.t_now if hasattr(state, 't_now') else datetime.now()
 
     # Calculate weights for each tag
-    tag_weights: Dict[str, float] = {}
+    tag_weights: dict[str, float] = {}
 
     for event_ref in state.E_tags:
         tag = event_ref.tag
@@ -281,7 +280,7 @@ def get_trace_tags_with_metric(
     state: EchoState2,
     max_tags: int = 5,
     min_weight: float = 0.1,
-) -> Tuple[list, RetrievalReductionMetric]:
+) -> tuple[list, RetrievalReductionMetric]:
     """Get trace tags for retrieval with compute resource reduction metric.
 
     Patent SF3-25: Wraps get_trace_tags_for_retrieval() and measures

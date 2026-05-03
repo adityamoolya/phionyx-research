@@ -10,9 +10,9 @@ Position in pipeline: After confidence_fusion, before narrative_layer.
 """
 
 import logging
-from typing import Dict, Any
+from typing import Any
 
-from ..base import PipelineBlock, BlockContext, BlockResult
+from ..base import BlockContext, BlockResult, PipelineBlock
 
 logger = logging.getLogger(__name__)
 
@@ -126,52 +126,52 @@ class KillSwitchGateBlock(PipelineBlock):
                 data={"error": str(e)}
             )
 
-    def _extract_ethics_risk(self, metadata: Dict[str, Any]) -> float:
+    def _extract_ethics_risk(self, metadata: dict[str, Any]) -> float:
         """Extract max ethics risk from pipeline context."""
         # From ethics_pre_response block result
         ethics_result = metadata.get("ethics_result")
         if ethics_result:
             if hasattr(ethics_result, "max_risk"):
-                return ethics_result.max_risk()
+                return float(ethics_result.max_risk())
             if isinstance(ethics_result, dict):
-                return ethics_result.get("max_risk_score", 0.0)
+                return float(ethics_result.get("max_risk_score", 0.0))
 
         # From v4 EthicsDecision
         ethics_decision = metadata.get("v4_ethics_decision")
         if ethics_decision:
             if hasattr(ethics_decision, "max_risk_score"):
-                return ethics_decision.max_risk_score
+                return float(ethics_decision.max_risk_score)
             if isinstance(ethics_decision, dict):
-                return ethics_decision.get("max_risk_score", 0.0)
+                return float(ethics_decision.get("max_risk_score", 0.0))
 
         return 0.0
 
-    def _extract_t_meta(self, metadata: Dict[str, Any]) -> float:
+    def _extract_t_meta(self, metadata: dict[str, Any]) -> float:
         """Extract T_meta from confidence fusion."""
         # From confidence_fusion block result
         confidence = metadata.get("confidence_result")
         if confidence:
             if hasattr(confidence, "t_meta") and confidence.t_meta is not None:
-                return confidence.t_meta
+                return float(confidence.t_meta)
             if isinstance(confidence, dict):
-                return confidence.get("t_meta", 1.0)
+                return float(confidence.get("t_meta", 1.0))
 
         # From v4 ConfidencePayload
         v4_confidence = metadata.get("v4_confidence")
         if v4_confidence:
             if hasattr(v4_confidence, "t_meta") and v4_confidence.t_meta is not None:
-                return v4_confidence.t_meta
+                return float(v4_confidence.t_meta)
             if isinstance(v4_confidence, dict):
-                return v4_confidence.get("t_meta", 1.0)
+                return float(v4_confidence.get("t_meta", 1.0))
 
         return 1.0  # Default: fully trusted
 
-    def _extract_drift(self, metadata: Dict[str, Any]) -> bool:
+    def _extract_drift(self, metadata: dict[str, Any]) -> bool:
         """Extract drift detection status."""
         drift_result = metadata.get("drift_result")
         if drift_result:
             if hasattr(drift_result, "drift_detected"):
-                return drift_result.drift_detected
+                return bool(drift_result.drift_detected)
             if isinstance(drift_result, dict):
-                return drift_result.get("drift_detected", False)
+                return bool(drift_result.get("drift_detected", False))
         return False
